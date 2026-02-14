@@ -1,0 +1,20 @@
+{
+  "name": "dan-skills",
+  "owner": {
+    "name": "Dan"
+  },
+  "metadata": {
+    "description": "Skills for improving daily work efficiency with Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "fe-deploy-setup",
+      "source": "./plugins/fe-deploy-setup",
+      "description": "Auto-generates deployment infrastructure for Nuxt 4 / Next.js projects. Creates GitHub Actions CI/CD, Dockerfile, Docker Compose, deploy script, and env docs.",
+      "version": "1.0.0",
+      "keywords": ["deploy", "docker", "ci-cd", "nuxt", "nextjs"],
+      "category": "development"
+    }
+  ]
+}

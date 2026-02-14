@@ -35,7 +35,11 @@ Run the following command in Claude Code:
 **Option 2: Direct Install**
 
 ```bash
+# Claude Code Plugin Marketplace
 /plugin install fe-deploy-setup@dan-skills
+
+# Or via npx skills
+npx skills add dante-dan/dan-skills --skill fe-deploy-setup
 ```
 
 **Option 3: Ask the Agent**
@@ -48,12 +52,20 @@ Simply tell Claude Code:
 
 To update skills to the latest version:
 
+**Plugin Marketplace:**
+
 1. Run `/plugin` in Claude Code
 2. Switch to **Marketplaces** tab (use arrow keys or Tab)
 3. Select **dan-skills**
 4. Choose **Update marketplace**
 
 You can also **Enable auto-update** to get the latest versions automatically.
+
+**npx skills:**
+
+```bash
+npx skills update
+```
 
 ## Available Skills
 
@@ -97,8 +109,17 @@ The skill will automatically detect your project type, collect configuration thr
 ```
 dan-skills/
 ├── .claude/
-│   └── skills -> ../src       # Symlink to src
-├── src/                       # Skills source
+│   └── skills -> ../src                  # Symlink for local dev / npx skills
+├── .claude-plugin/
+│   └── marketplace.json                  # Plugin Marketplace catalog
+├── plugins/
+│   └── fe-deploy-setup/
+│       ├── .claude-plugin/
+│       │   └── plugin.json               # Plugin manifest
+│       └── skills/
+│           └── fe-deploy-setup/
+│               └── SKILL.md -> src/...   # Symlink to source
+├── src/                                  # Skills source (canonical)
 │   └── fe-deploy-setup/
 │       ├── meta.json
 │       └── SKILL.md

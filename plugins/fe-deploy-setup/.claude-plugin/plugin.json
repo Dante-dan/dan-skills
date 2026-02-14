@@ -1,0 +1,8 @@
+{
+  "name": "fe-deploy-setup",
+  "description": "Auto-generates deployment infrastructure for Nuxt 4 / Next.js projects",
+  "version": "1.0.0",
+  "author": {
+    "name": "Dan"
+  }
+}
