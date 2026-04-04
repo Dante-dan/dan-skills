@@ -1,0 +1,8 @@
+{
+  "name": "dan-r2-skill",
+  "description": "Upload files to Cloudflare R2 and replace local paths in markdown",
+  "version": "1.0.0",
+  "author": {
+    "name": "Dan"
+  }
+}

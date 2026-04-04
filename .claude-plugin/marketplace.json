@@ -15,6 +15,14 @@
       "version": "1.0.0",
       "keywords": ["deploy", "docker", "ci-cd", "nuxt", "nextjs"],
       "category": "development"
+    },
+    {
+      "name": "dan-r2-skill",
+      "source": "./plugins/dan-r2-skill",
+      "description": "Upload files to Cloudflare R2 and replace local paths in markdown.",
+      "version": "1.0.0",
+      "keywords": ["r2", "cloudflare", "upload", "images", "cdn"],
+      "category": "tools"
     }
   ]
 }
