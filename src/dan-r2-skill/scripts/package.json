@@ -1,0 +1,10 @@
+{
+  "name": "dan-r2-skill",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "glob": "^11.0.0",
+    "minimist": "^1.2.8"
+  }
+}
