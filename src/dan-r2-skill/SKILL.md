@@ -68,6 +68,8 @@ Show user:
 | `--dir <path>` | Upload directory (default: cwd) |
 | `--content <type>` | `images` / `docs` / `all` (default: `images`) |
 | `--glob <pattern>` | Custom glob (overrides --content) |
+| `--files <paths>` | Comma-separated specific files to upload (e.g. `--files "a.jpg,b.png"`) |
+| `--new-only` | Only upload files not already on R2 (incremental upload) |
 | `--dry-run` | Preview only, no upload |
 | `--clean` | Delete local files after upload |
 | `--no-replace` | Skip markdown path replacement |

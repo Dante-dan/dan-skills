@@ -66,3 +66,25 @@ export function scanFiles(dir: string, globs: string[]): ScannedFile[] {
 
   return files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
 }
+
+export function scanSpecificFiles(dir: string, relativePaths: string[]): ScannedFile[] {
+  const absDir = resolve(dir);
+  const files: ScannedFile[] = [];
+
+  for (const rel of relativePaths) {
+    const abs = resolve(absDir, rel);
+    if (!existsSync(abs)) {
+      console.warn(`[warn] File not found: ${rel}`);
+      continue;
+    }
+    const fileName = rel.split("/").pop()!;
+    files.push({
+      absolutePath: abs,
+      relativePath: rel,
+      createdDate: getFileCreatedDate(abs),
+      fileName,
+    });
+  }
+
+  return files;
+}

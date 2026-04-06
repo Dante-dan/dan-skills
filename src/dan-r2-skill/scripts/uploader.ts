@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { readFileSync } from "fs";
 import type { R2Config } from "./config.js";
 import type { ScannedFile } from "./scanner.js";
@@ -47,6 +47,42 @@ function createS3Client(r2Config: R2Config): S3Client {
       secretAccessKey: r2Config.secretAccessKey!,
     },
   });
+}
+
+async function existsOnR2(
+  client: S3Client,
+  bucket: string,
+  key: string
+): Promise<boolean> {
+  try {
+    await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function filterNewOnly(
+  files: ScannedFile[],
+  r2Config: R2Config,
+  pathPrefix: string
+): Promise<ScannedFile[]> {
+  const client = createS3Client(r2Config);
+  const bucket = r2Config.bucket!;
+  const result: ScannedFile[] = [];
+
+  for (const file of files) {
+    const r2Key = buildR2Key(file, pathPrefix);
+    const exists = await existsOnR2(client, bucket, r2Key);
+    if (!exists) {
+      result.push(file);
+    } else {
+      console.log(`[skip] ${file.relativePath} (already on R2)`);
+    }
+  }
+
+  client.destroy();
+  return result;
 }
 
 export async function uploadFiles(

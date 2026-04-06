@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, writeFileSync, unlinkSync, readFileSync } from "
 import { dirname } from "path";
 import { loadConfig, validateConfig, resolveGlobs, getConfigPath } from "./config.js";
 import { scanFiles } from "./scanner.js";
-import { uploadFiles } from "./uploader.js";
+import { uploadFiles, filterNewOnly } from "./uploader.js";
 import { replaceInMarkdown } from "./replacer.js";
 
 const HELP = `
@@ -17,6 +17,8 @@ Options:
   --dir <path>        Upload directory (default: current directory)
   --content <type>    images | docs | all (default: from config or "images")
   --glob <pattern>    Custom glob pattern (overrides --content)
+  --files <paths>     Comma-separated list of specific files to upload
+  --new-only          Only upload files not already on R2
   --dry-run           Preview what would be uploaded
   --clean             Delete local files after successful upload
   --no-replace        Skip markdown path replacement
@@ -71,8 +73,8 @@ async function initConfig(level: "user" | "project", cwd: string) {
 
 async function main() {
   const args = minimist(process.argv.slice(2), {
-    boolean: ["dry-run", "clean", "help", "init", "replace"],
-    string: ["dir", "content", "glob", "init-level"],
+    boolean: ["dry-run", "clean", "help", "init", "replace", "new-only"],
+    string: ["dir", "content", "glob", "init-level", "files"],
     default: { replace: true },
     alias: { h: "help" },
   });
@@ -121,9 +123,18 @@ async function main() {
   }
 
   // Scan
-  const globs = resolveGlobs(config);
-  console.log(`Scanning ${cwd} with patterns: ${globs.join(", ")}`);
-  const files = scanFiles(cwd, globs);
+  let files;
+  if (args.files) {
+    // --files: upload specific files
+    const filePaths = args.files.split(",").map((f: string) => f.trim());
+    const { scanSpecificFiles } = await import("./scanner.js");
+    files = scanSpecificFiles(cwd, filePaths);
+    console.log(`Specified ${filePaths.length} file(s)`);
+  } else {
+    const globs = resolveGlobs(config);
+    console.log(`Scanning ${cwd} with patterns: ${globs.join(", ")}`);
+    files = scanFiles(cwd, globs);
+  }
 
   if (files.length === 0) {
     console.log("No files found matching the patterns.");
@@ -132,8 +143,19 @@ async function main() {
 
   console.log(`Found ${files.length} file(s)${dryRun ? " (dry-run)" : ""}:\n`);
 
-  // Upload
+  // --new-only: filter out files already on R2
   const pathPrefix = config.upload?.pathPrefix || "blog/{date}";
+  if (args["new-only"]) {
+    console.log("Checking R2 for existing files...");
+    files = await filterNewOnly(files, config.r2!, pathPrefix);
+    if (files.length === 0) {
+      console.log("All files already exist on R2. Nothing to upload.");
+      return;
+    }
+    console.log(`${files.length} new file(s) to upload.\n`);
+  }
+
+  // Upload
   const results = await uploadFiles(files, config.r2!, pathPrefix, dryRun);
 
   const uploaded = results.filter((r) => !r.skipped);
