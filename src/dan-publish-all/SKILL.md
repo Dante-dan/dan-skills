@@ -110,9 +110,20 @@ This automatically:
 - Uploads files to Cloudflare R2
 - Replaces local paths in markdown files with CDN URLs
 
+### Step 4.5: Pre-generate Slugs
+
+Before publishing, generate and verify slugs for all articles upfront. This allows blog and WeChat to publish in parallel since both need the slug.
+
+For each article:
+1. Generate a URL-friendly slug from the title
+2. Verify uniqueness: `bun run $BLOG_SKILL_DIR/scripts/blog-publish.ts --check-slug <slug>`
+3. Record the mapping: `{ title, slug, language, blog_url }`
+   - zh articles: `blog_url = https://dhpie.com/posts/cn/{slug}`
+   - en articles: `blog_url = https://dhpie.com/posts/en/{slug}`
+
 ### Step 5: Publish to All Platforms (Parallel)
 
-Launch sub-agents in parallel for each platform:
+Launch sub-agents in parallel for each platform. Slugs and blog URLs are already known from Step 4.5.
 
 #### 5a: Publish to Blog (dhpie.com)
 
@@ -135,7 +146,7 @@ Payload fields:
 | **title** | Filename without `.md` extension |
 | **language** | `zh` or `en` (detected in Step 2) |
 | **categoryId** | zh → `6684e45331b55c96fe1592f3`, en → `66853f5931b55c96fe159a4f` |
-| **slug** | Generate URL-friendly slug from title (check uniqueness with `--check-slug`) |
+| **slug** | Use pre-generated slug from Step 4.5 |
 | **tags** | From front matter, or generate 3-5 relevant tags |
 | **summary** | From front matter, or generate 1-2 sentence summary |
 | **hook** | From front matter `hook_a`, format as blockquote `> ...` |
@@ -150,15 +161,13 @@ Payload fields:
 
 After publishing, insert hook blockquote at top of source file.
 
-#### 5b: Publish to WeChat (Chinese articles only)
-
-**IMPORTANT**: WeChat publishing MUST happen AFTER blog publishing, because the blog URL is needed as the WeChat article's original link (原文链接).
+#### 5b: Publish to WeChat (Chinese articles only, parallel with 5a)
 
 For each Chinese article, invoke `baoyu-post-to-wechat` skill:
 
 1. Convert markdown to WeChat-compatible HTML using `baoyu-markdown-to-html`
 2. Upload cover image as WeChat thumb media
-3. Set `content_source_url` (原文链接) to the blog URL from Step 5a, format: `https://dhpie.com/posts/cn/{slug}`
+3. Set `content_source_url` (原文链接) to blog URL from Step 4.5: `https://dhpie.com/posts/cn/{slug}`
 4. Publish via WeChat API as draft
 
 ### Step 6: Report Results
@@ -191,9 +200,11 @@ Step 3 (parallel) ──┼─ Agent: Article 2 illustrations ─┼── wait 
                               │
 Step 4 (sequential) ── R2 upload (--files, all new images)
                               │
-Step 5a ── Agent: Blog publish (all articles) ── get blog URLs
+Step 4.5 ── Pre-generate slugs + blog URLs
                               │
-Step 5b ── Agent: WeChat publish (zh only, with blog URL as 原文链接)
+                    ┌─ Agent: Blog publish (all articles)  ─┐
+Step 5 (parallel) ──┤                                       ├── wait all
+                    └─ Agent: WeChat publish (zh, 原文链接=blog URL) ─┘
                               │
 Step 6 ── Report results
 ```
