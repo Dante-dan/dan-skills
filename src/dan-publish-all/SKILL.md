@@ -152,11 +152,14 @@ After publishing, insert hook blockquote at top of source file.
 
 #### 5b: Publish to WeChat (Chinese articles only)
 
+**IMPORTANT**: WeChat publishing MUST happen AFTER blog publishing, because the blog URL is needed as the WeChat article's original link (原文链接).
+
 For each Chinese article, invoke `baoyu-post-to-wechat` skill:
 
 1. Convert markdown to WeChat-compatible HTML using `baoyu-markdown-to-html`
 2. Upload cover image as WeChat thumb media
-3. Publish via WeChat API as draft
+3. Set `content_source_url` (原文链接) to the blog URL from Step 5a, format: `https://dhpie.com/posts/cn/{slug}`
+4. Publish via WeChat API as draft
 
 ### Step 6: Report Results
 
@@ -188,9 +191,9 @@ Step 3 (parallel) ──┼─ Agent: Article 2 illustrations ─┼── wait 
                               │
 Step 4 (sequential) ── R2 upload (--files, all new images)
                               │
-                    ┌─ Agent: Blog publish (all articles) ─┐
-Step 5 (parallel) ──┤                                      ├── wait all
-                    └─ Agent: WeChat publish (zh only)    ─┘
+Step 5a ── Agent: Blog publish (all articles) ── get blog URLs
+                              │
+Step 5b ── Agent: WeChat publish (zh only, with blog URL as 原文链接)
                               │
 Step 6 ── Report results
 ```
