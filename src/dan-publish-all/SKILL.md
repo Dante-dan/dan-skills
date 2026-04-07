@@ -163,12 +163,38 @@ After publishing, insert hook blockquote at top of source file.
 
 #### 5b: Publish to WeChat (Chinese articles only, parallel with 5a)
 
-For each Chinese article, invoke `baoyu-post-to-wechat` skill:
+For each Chinese article, invoke `baoyu-post-to-wechat` skill via API method.
 
-1. Convert markdown to WeChat-compatible HTML using `baoyu-markdown-to-html`
-2. Upload cover image as WeChat thumb media
-3. Set `content_source_url` (原文链接) to blog URL from Step 4.5: `https://dhpie.com/posts/cn/{slug}`
-4. Publish via WeChat API as draft
+**WeChat draft/add payload 额外字段（CRITICAL）：**
+
+在调用 `wechat-api.ts` 发布前，确保 `draft/add` API 请求的 `articles[]` 中包含以下字段：
+
+| Field | Value | Description |
+|-------|-------|-------------|
+| `content_source_url` | `https://dhpie.com/posts/cn/{slug}` | 原文链接，slug 来自 Step 4.5 |
+| `need_open_comment` | `1` | 开启评论 |
+| `only_fans_can_comment` | `0` | 所有人可评论 |
+
+**发布后手动设置（API 暂不支持）：**
+
+以下设置需要在微信公众号后台手动操作，因为 `draft/add` API 不直接支持：
+
+| 设置 | 操作 |
+|------|------|
+| 声明原创 | 在草稿箱编辑时勾选「原创」 |
+| 关闭快捷转载 | 原创声明后，取消勾选「允许快捷转载」 |
+| 开启赞赏 | 编辑时开启「赞赏」功能 |
+| 加入合集 | 发布时选择或创建合集 |
+
+**操作步骤：**
+1. 发布完成后，前往 https://mp.weixin.qq.com → 内容管理 → 草稿箱
+2. 编辑每篇草稿：
+   - 底部勾选「原创」→ 取消「允许快捷转载」
+   - 开启「赞赏」
+3. 发布时选择合集（如果合集不存在，先创建）
+
+**提醒用户：**
+在 Step 6 报告中明确提醒用户需要手动完成上述四项设置。
 
 ### Step 6: Report Results
 
@@ -181,11 +207,15 @@ R2：上传了 N 个文件
 博客：发布了 A 篇文章到 dhpie.com
   - [title1]: [url1]
   - [title2]: [url2]
-公众号：发布了 B 篇草稿到微信公众号
-  - [title1]: media_id
-  - [title2]: media_id
+公众号：发布了 B 篇草稿到微信公众号（原文链接已设置为博客地址）
+  - [title1]: media_id → 原文链接: [blog_url]
+  - [title2]: media_id → 原文链接: [blog_url]
 
-请前往微信公众号后台发布草稿：https://mp.weixin.qq.com
+⚠️ 公众号草稿还需手动设置：
+  1. 勾选「原创」→ 取消「允许快捷转载」
+  2. 开启「赞赏」
+  3. 加入合集
+前往操作：https://mp.weixin.qq.com → 内容管理 → 草稿箱
 ```
 
 ## Parallelization Strategy
