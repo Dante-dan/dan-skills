@@ -1,0 +1,1 @@
+../../../../src/dan-publish-all/SKILL.md

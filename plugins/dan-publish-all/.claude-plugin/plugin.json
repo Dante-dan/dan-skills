@@ -1,0 +1,8 @@
+{
+  "name": "dan-publish-all",
+  "description": "One-click publish markdown articles with auto-generated illustrations and covers to blog and WeChat",
+  "version": "1.0.0",
+  "author": {
+    "name": "Dan"
+  }
+}
