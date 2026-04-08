@@ -1,11 +1,11 @@
 ---
 name: dan-publish-all
-description: One-click publish markdown articles with auto-generated illustrations and covers to blog (dhpie.com) and WeChat. Triggers on "发布各个平台", "publish all", "全平台发布", "发布到所有平台", "publish everywhere".
+description: One-click publish markdown articles with auto-generated illustrations and covers to blog (dhpie.com), WeChat, and X Article. Triggers on "发布各个平台", "publish all", "全平台发布", "发布到所有平台", "publish everywhere".
 ---
 
 # dan-publish-all
 
-一键发布 markdown 文章到所有平台：自动配图、生成封面、上传 CDN、发布博客和微信公众号。
+一键发布 markdown 文章到所有平台：自动配图、生成封面、上传 CDN、发布博客、微信公众号和 X Article。
 
 ## Language
 
@@ -14,7 +14,7 @@ Match user's language.
 ## Workflow Overview
 
 ```
-输入文章 → 检查配图 → 检查封面 → 上传 R2 → 并行发布博客 + 公众号
+输入文章 → 检查配图 → 检查封面 → 上传 R2 → 并行发布博客 + 公众号 + X Article
 ```
 
 ### Step 1: Select Articles
@@ -196,6 +196,19 @@ For each Chinese article, invoke `baoyu-post-to-wechat` skill via API method.
 **提醒用户：**
 在 Step 6 报告中明确提醒用户需要手动完成上述四项设置。
 
+#### 5c: Publish to X Article (parallel with 5a and 5b)
+
+For each article, invoke `baoyu-post-to-x` skill to publish as an X Article (long-form markdown).
+
+1. Read the article content (without front matter)
+2. Use `baoyu-post-to-x` skill with article mode:
+   - Title: article title (filename without `.md`)
+   - Content: full markdown content with CDN image URLs
+   - The skill handles markdown → HTML conversion, image downloading, and Chrome CDP posting
+3. The skill opens Chrome with the X Article editor pre-filled — user reviews and clicks publish
+
+**Note:** X Article publishing uses Chrome CDP and requires manual publish confirmation in the browser. The draft will be ready for review.
+
 ### Step 6: Report Results
 
 ```
@@ -210,6 +223,9 @@ R2：上传了 N 个文件
 公众号：发布了 B 篇草稿到微信公众号（原文链接已设置为博客地址）
   - [title1]: media_id → 原文链接: [blog_url]
   - [title2]: media_id → 原文链接: [blog_url]
+
+X Article：C 篇文章已在 Chrome 中打开预览
+  - [title1]: 请在浏览器中确认后点击发布
 
 ⚠️ 公众号草稿还需手动设置：
   1. 勾选「原创」→ 取消「允许快捷转载」
@@ -232,9 +248,9 @@ Step 4 (sequential) ── R2 upload (--files, all new images)
                               │
 Step 4.5 ── Pre-generate slugs + blog URLs
                               │
-                    ┌─ Agent: Blog publish (all articles)  ─┐
-Step 5 (parallel) ──┤                                       ├── wait all
-                    └─ Agent: WeChat publish (zh, 原文链接=blog URL) ─┘
+                    ┌─ Agent: Blog publish (all articles)              ─┐
+Step 5 (parallel) ──┼─ Agent: WeChat publish (zh, 原文链接=blog URL)  ─┼── wait all
+                    └─ Agent: X Article publish (all articles)         ─┘
                               │
 Step 6 ── Report results
 ```
@@ -246,4 +262,5 @@ Step 6 ── Report results
 - Paired zh/en articles share the same illustrations and covers
 - WeChat only receives Chinese articles; blog receives both zh and en
 - R2 upload uses `--files` flag to only upload newly generated images
+- X Article uses Chrome CDP via `baoyu-post-to-x` — draft opens in browser for manual publish confirmation
 - If auth for any platform expires, report which platform and stop that branch only
