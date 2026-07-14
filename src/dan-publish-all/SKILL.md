@@ -166,9 +166,9 @@ Payload fields:
 |-------|------|
 | **title** | Filename without `.md` extension |
 | **language** | `zh` or `en` (detected in Step 2) |
-| **categoryId** | zh → `6684e45331b55c96fe1592f3`, en → `66853f5931b55c96fe159a4f` |
+| **categoryId** | zh → `158511301872074752` (cn), en → `158511301876269056` (en)。core v13 起为 Snowflake 字符串 ID，失效时用 `curl -s https://api.dhpie.com/api/v3/categories` 重新获取 |
 | **slug** | Use pre-generated slug from Step 4.5 |
-| **tags** | From front matter, or generate 3-5 relevant tags |
+| **tags** | From front matter（Obsidian 与博客标签已统一，见 dan-blog-sync SKILL.md 的词表规则与 vault `long-post/docs/标签规范.md`）；无 front matter 时按该规范生成 3-5 个 |
 | **summary** | From front matter, or generate 1-2 sentence summary |
 | **hook** | From front matter `hook_a`, format as blockquote `> ...` |
 | **text** | Full markdown content (without front matter) |

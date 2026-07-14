@@ -25,8 +25,8 @@ bun run ${SKILL_DIR}/scripts/blog-publish.ts --check-auth
 
 If output is `AUTH_EXPIRED`, STOP and tell user:
 
-> Token 已过期，请更新 `~/.Codex/skills/dan-blog-sync/.env` 中的 DHPIE_TOKEN。
-> 登录 https://api.dhpie.com/proxy/qaqdmin 后从浏览器请求中复制新的 bearer token。
+> Token 已过期，请更新 `~/.claude/skills/dan-blog-sync/.env` 中的 DHPIE_TOKEN。
+> 登录 https://api.dhpie.com/proxy/qaqdmin → 设定 → API Key，新建一个 `txo` 开头的 API Key 填入。
 
 ### Step 2: List Files
 
@@ -40,9 +40,9 @@ For each file, read the content, then use LLM intelligence to generate:
 |-------|------|
 | **title** | Filename without `.md` extension |
 | **language** | Detect from content: Chinese → `zh`, English → `en` |
-| **categoryId** | `zh` → `6684e45331b55c96fe1592f3`, `en` → `66853f5931b55c96fe159a4f` |
+| **categoryId** | `zh` → `158511301872074752` (cn), `en` → `158511301876269056` (en)。若报 categoryId 无效，用 `curl -s https://api.dhpie.com/api/v3/categories` 重新获取（v13 起为 Snowflake 字符串 ID） |
 | **slug** | Generate URL-friendly slug from title. Must be unique — check with `--check-slug`. For zh/en pair, use different slugs. |
-| **tags** | Generate 3-5 relevant tags based on content semantics |
+| **tags** | 3-5 tags. **先拉线上已有标签词表优先复用**：`curl -s "https://api.dhpie.com/api/v3/posts?size=50&page=1"`（及 page=2）汇总 `tags` 字段。命名规则（与 Obsidian 侧一致）：中文概念用中文（软件工程、自托管、数据迁移）；专有名词保持原文（AI、Docker、MCP、mx-space）；英文多词概念用 kebab-case（harness-engineering、context-engineering）；同一概念不要中英各建一个（已有 `软件工程` 就不要再造 `Software Engineering`）。文章若有 Obsidian frontmatter tags，直接沿用 |
 | **summary** | Generate a concise summary (1-2 sentences) |
 | **hook** | Generate an engaging hook in blockquote format (`> ...`) to attract readers. **Insert at the top of the original md file** after generating. |
 | **text** | File content with images converted (see below) |
@@ -98,6 +98,8 @@ Token stored in `${SKILL_DIR}/.env`:
 DHPIE_TOKEN=your_token_here
 ```
 
-Supports two token types:
-- **API Key (recommended):** `txo*` format, created via blog admin panel (`/api/v2/auth/token`). Never expires.
-- **JWT:** `eyJ*` format, expires every 14 days. If expired, user must re-login to get a new one.
+Token type (core v13+, Better Auth):
+- **API Key:** created in the blog admin panel (设定 → API Key). Sent as **`x-api-key: <key>` header** — NOT `Authorization: Bearer` (Bearer silently degrades to guest, since public endpoints still return 200).
+- Legacy JWTs (`eyJ*`) from pre-v10 no longer work — the v10 auth rebuild invalidated them.
+
+API notes (core v13): base is `/api/v3`; request bodies remain camelCase, responses come back as `{ data, meta }` with snake_case fields.

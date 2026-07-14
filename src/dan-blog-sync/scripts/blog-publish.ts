@@ -14,7 +14,7 @@
 import { readFileSync, existsSync } from "fs";
 import { dirname, resolve } from "path";
 
-const API_BASE = "https://api.dhpie.com/api/v2";
+const API_BASE = "https://api.dhpie.com/api/v3";
 
 function getToken(): string {
   const envToken = process.env.DHPIE_TOKEN;
@@ -34,30 +34,36 @@ function getToken(): string {
 }
 
 async function checkAuth(token: string): Promise<boolean> {
+  // v3: public endpoints return 200 even as guest, so we must inspect the
+  // check_logged body — data.ok === 1 only with valid admin credentials.
   try {
-    const res = await fetch(`${API_BASE}/categories`, {
+    const res = await fetch(`${API_BASE}/owner/check_logged`, {
       headers: {
-        Authorization: `bearer ${token}`,
+        "x-api-key": token,
         Accept: "application/json",
       },
     });
-    if (res.status === 401 || res.status === 403) {
-      return false;
-    }
-    return res.ok;
+    if (!res.ok) return false;
+    const json = (await res.json()) as { data?: { ok?: number } };
+    return json?.data?.ok === 1;
   } catch {
     return false;
   }
 }
 
 async function checkSlugExists(slug: string, token: string): Promise<boolean> {
+  // v3 removed /slugs/:slug; get-url/:slug returns 200 if the slug is taken,
+  // 404 (POST_NOT_FOUND) if it is available.
   try {
-    const res = await fetch(`${API_BASE}/slugs/${slug}`, {
-      headers: {
-        Authorization: `bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
+    const res = await fetch(
+      `${API_BASE}/posts/get-url/${encodeURIComponent(slug)}`,
+      {
+        headers: {
+          "x-api-key": token,
+          Accept: "application/json",
+        },
+      }
+    );
     return res.ok;
   } catch {
     return false;
@@ -71,7 +77,7 @@ async function createPost(
   const res = await fetch(`${API_BASE}/posts`, {
     method: "POST",
     headers: {
-      Authorization: `bearer ${token}`,
+      "x-api-key": token,
       Accept: "application/json",
       "Content-Type": "application/json;charset=UTF-8",
     },
