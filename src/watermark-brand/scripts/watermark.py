@@ -101,9 +101,20 @@ def make_tile_pattern(
     angle: float = -22,
     opacity: int = 60,
     color: tuple = (70, 55, 25),
-    font_size: int = 18,
+    font_size: int = 24,
+    text_opacity: int = None,
     keep_color: bool = False,
 ) -> Image.Image:
+    if text_opacity is None:
+        text_opacity = min(255, int(opacity * 1.6))
+
+    # tile 宽度需要容纳文字实际宽度（+留白），否则长账号名会在平铺时首尾相连糊成一片
+    font = load_font(font_size)
+    measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    bbox = measure.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    tile_size = max(tile_size, int(text_w * 1.35))
+
     tile = Image.new("RGBA", (tile_size, tile_size), (0, 0, 0, 0))
 
     logo_h = int(tile_size * 0.30)
@@ -112,11 +123,9 @@ def make_tile_pattern(
     logo_tinted = fade(logo_resized, opacity) if keep_color else recolor(logo_resized, color, opacity)
     tile.alpha_composite(logo_tinted, ((tile_size - logo_tinted.width) // 2, int(tile_size * 0.10)))
 
-    font = load_font(font_size)
     draw = ImageDraw.Draw(tile)
-    bbox = draw.textbbox((0, 0), text, font=font)
-    tw = bbox[2] - bbox[0]
-    draw.text(((tile_size - tw) // 2, int(tile_size * 0.55)), text, font=font, fill=color + (opacity,))
+    tw = text_w
+    draw.text(((tile_size - tw) // 2, int(tile_size * 0.55)), text, font=font, fill=color + (text_opacity,))
 
     diag = int(math.hypot(W, H)) + tile_size * 2
     cols = diag // tile_size + 2
