@@ -181,7 +181,9 @@ def make_corner_badge(
 # ---------------- 暗水印：LSB 隐写 ----------------
 
 def embed_blind_watermark(img: Image.Image, message: str, repeat: int = 20) -> Image.Image:
-    arr = np.array(img.convert("RGB"))
+    has_alpha = img.mode == "RGBA"
+    rgb_img = img.convert("RGB")
+    arr = np.array(rgb_img)
     h, w, _ = arr.shape
 
     payload = message.encode("utf-8")
@@ -198,7 +200,12 @@ def embed_blind_watermark(img: Image.Image, message: str, repeat: int = 20) -> I
     channel = (channel & 0xFE) | bits
     flat[: len(bits), 0] = channel
 
-    return Image.fromarray(flat.reshape(h, w, 3), mode="RGB")
+    result = Image.fromarray(flat.reshape(h, w, 3), mode="RGB")
+    if has_alpha:
+        r, g, b = result.split()
+        alpha = img.split()[3]
+        result = Image.merge("RGBA", (r, g, b, alpha))
+    return result
 
 
 def extract_blind_watermark(img: Image.Image, repeat: int = 20):
@@ -264,9 +271,11 @@ def main():
     if not args.input or not args.output:
         parser.error("需要提供 input 和 output 路径（或使用 --extract）")
 
-    img = Image.open(args.input).convert("RGB")
-    W, H = img.size
-    canvas = img.convert("RGBA")
+    src = Image.open(args.input)
+    has_alpha = src.mode in ("RGBA", "LA") or (src.mode == "P" and "transparency" in src.info)
+    canvas = src.convert("RGBA")
+    W, H = canvas.size
+    original_alpha = canvas.split()[3] if has_alpha else None
 
     if not args.no_visible:
         if not args.platform or not args.handle:
@@ -285,7 +294,13 @@ def main():
             logo = load_logo_rgba(args.platform, target_h=200)
             canvas = make_corner_badge(canvas, logo, args.handle, corner=args.corner)
 
-    result = canvas.convert("RGB")
+    if has_alpha:
+        # 保留原图透明区域：水印只叠加在不透明像素上，透明区域的 alpha 维持原状
+        r, g, b, _ = canvas.split()
+        canvas = Image.merge("RGBA", (r, g, b, original_alpha))
+        result = canvas
+    else:
+        result = canvas.convert("RGB")
 
     if not args.no_blind:
         message = args.blind_message or f"{args.platform}:{args.handle}"
