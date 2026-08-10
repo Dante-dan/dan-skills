@@ -34,7 +34,7 @@ PLATFORM_LOGOS = {
 # tile 纹理水印使用的 logo（部分平台用简化/单色版本，避免整块底色或过多细节在低透明度下糊成色斑）
 PLATFORM_LOGOS_TILE = {
     "x": LOGO_DIR / "x-black.png",
-    "wechat": LOGO_DIR / "wechat-mono.png",
+    "wechat": LOGO_DIR / "wechat-icon-white.png",
     "xiaohongshu": LOGO_DIR / "xiaohongshu-mono.png",
     "douyin": LOGO_DIR / "douyin-icon.png",
 }
@@ -67,10 +67,10 @@ def load_logo_rgba(platform: str, target_h: int, for_tile: bool = False) -> Imag
 
 PLATFORM_KEEP_COLOR = {
     # 彩色/品牌色 logo：纹理水印保留原始颜色，只整体调透明度（保留品牌识别度）
-    "wechat": True,
     "xiaohongshu": True,
-    # 单色图标：纹理水印统一改成低调深色，避免纯黑在深色文字区域太突兀
+    # 单色图标：纹理水印统一改成低调深色，避免纯黑/纯白在浅色背景太突兀
     "x": False,
+    "wechat": False,
     "douyin": False,
 }
 

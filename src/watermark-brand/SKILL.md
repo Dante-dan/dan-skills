@@ -21,7 +21,7 @@ description: 给图片加品牌水印，明水印（可见 logo 平铺纹理/角
 | `--platform` | 平台 | logo 来源 | 素材文件 |
 |---|---|---|---|
 | `x` | X (Twitter) | X 官方 Brand Toolkit (about.x.com) | `x-black.png` / `x-white.png` / `x.svg` |
-| `wechat` | 微信公众号 | 微信官方 WeDesign 品牌指引站 | `wechat.png`（完整标志）/ `wechat-mono.png`（纯文字，tile 专用） |
+| `wechat` | 微信公众号 | 微信官方 WeDesign 品牌指引站 + 官方 newsroom 图标资源 | `wechat.png`（完整标志，corner 专用）/ `wechat-icon-white.png`（纯气泡图标无文字，tile 专用） |
 | `xiaohongshu` | 小红书 | 小红书官方 SVG | `xiaohongshu.png`（完整胶囊 logo）/ `xiaohongshu-mono.png`（纯文字红色，tile 专用） |
 | `douyin` | 抖音 | 抖音创作者中心官方 CDN | `douyin-icon.png`（单色音符图标） |
 
@@ -90,8 +90,8 @@ logo 缩小后按网格平铺、整体旋转 -22°，裁剪覆盖全图，模拟
 - 覆盖面积大，局部裁剪也很难完全去除水印
 
 **颜色处理策略**（`PLATFORM_KEEP_COLOR` 决定）：
-- **微信、小红书**：保留品牌色（微信绿、小红书红），只调整透明度（`fade()`），tile 专用素材是简化过的纯色形状（`wechat-mono.png` 只保留"微信"文字，`xiaohongshu-mono.png` 只保留"小红书"文字），避免复杂图标/大面积底色在低透明度下糊成模糊色斑
-- **X、抖音**：logo 本身是单色图形，统一改成低调深棕色（`recolor()`），在浅色背景上可见、不过分突兀
+- **小红书**：保留品牌色（小红书红），只调整透明度（`fade()`），tile 专用素材是简化过的纯色形状（`xiaohongshu-mono.png` 只保留"小红书"文字），避免大面积底色在低透明度下糊成模糊色斑
+- **X、微信、抖音**：logo 统一改成低调深棕色（`recolor()`），在浅色背景上可见、不过分突兀。微信 tile 专用素材是从官方图标裁出的纯气泡图标（`wechat-icon-white.png`，不含 "WeChat" 文字），配文字层的账号名一起平铺，不出现"微信"字样
 
 ### corner（角标）
 
