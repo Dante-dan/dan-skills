@@ -101,12 +101,12 @@ def make_tile_pattern(
     angle: float = -22,
     opacity: int = 60,
     color: tuple = (70, 55, 25),
-    font_size: int = 24,
+    font_size: int = 20,
     text_opacity: int = None,
     keep_color: bool = False,
 ) -> Image.Image:
     if text_opacity is None:
-        text_opacity = min(255, int(opacity * 1.6))
+        text_opacity = min(255, int(opacity * 1.2))
 
     # tile 宽度需要容纳文字实际宽度（+留白），否则长账号名会在平铺时首尾相连糊成一片
     font = load_font(font_size)
