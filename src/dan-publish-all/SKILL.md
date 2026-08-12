@@ -14,8 +14,11 @@ Match user's language.
 ## Workflow Overview
 
 ```
-输入文章 → 检查配图 → 检查封面 → 上传 R2 → 并行发布博客 + 公众号 + X Article + 小红书卡片
+输入文章 → 检查配图 → 检查封面 → 去盲水印 → 分平台加水印 → 上传 R2
+        → 并行发布博客 + 公众号 + X Article + 小红书卡片（各用各自水印版本）
 ```
+
+**Image invariant:** no raw generated image is ever uploaded or referenced. Every published image is dewatermarked first (Step 3.5a), and every platform other than the blog references its own brand-watermarked copy (Step 3.5b).
 
 ### Step 1: Select Articles
 
@@ -116,7 +119,105 @@ For each article (or article pair) missing a cover, launch a sub-agent that:
 6. Inserts `![cover](cover-image/{slug}/cover.jpg)` after front matter in the article
 7. If article has a paired zh/en version, inserts same cover reference into both
 
+### Step 3.5: Dewatermark + Per-Platform Watermarks
+
+**Runs after all images exist (Step 3) and BEFORE any upload (Step 4).** Never upload or reference a raw generated image — every published image must pass through this stage first.
+
+The stage produces, for each source image, one **neutral** version (dewatermarked, no brand mark) plus one **branded** version per target platform.
+
+#### 3.5a: Strip blind watermarks + metadata
+
+AI-generated images carry provenance data in two layers, and deleting EXIF only handles the first:
+
+1. **Metadata** — EXIF, PNG `tEXt`/`iTXt`/`zTXt`, C2PA `caBX` chunks
+2. **Blind watermark** — encoded into pixel values (SynthID-class); survives metadata stripping, requires pixel perturbation
+
+Apply both. Reference `dewatermark-image` SKILL.md for the detection steps; the working recipe:
+
+```python
+from PIL import Image
+import numpy as np, io
+
+src = Image.open(INPUT).convert("RGB")
+a = np.array(src).astype(np.int16)
+
+# ±1 high-frequency noise: imperceptible, disrupts LSB/SynthID-class encoding
+rng = np.random.default_rng(SEED)          # fixed seed = reproducible
+a = np.clip(a + rng.integers(-1, 2, size=a.shape, dtype=np.int16), 0, 255).astype(np.uint8)
+
+# Re-encode so DCT requantization damages residual steganography
+buf = io.BytesIO()
+Image.fromarray(a, "RGB").save(buf, format="JPEG", quality=95, optimize=True)
+buf.seek(0)
+Image.open(buf).save(NEUTRAL_OUT, format="JPEG", quality=95)
+```
+
+Then verify: PSNR vs. the original should be **> 40 dB** (no visible change). Confirm no metadata survives:
+
+```bash
+python3 -c "from PIL import Image; im=Image.open('$OUT'); print(list(im.info.keys()), len(im.getexif()))"
+sips --deleteProperty all "$OUT"
+```
+
+This neutral file is what the **blog** uses — the blog is the canonical destination and carries no platform branding.
+
+#### 3.5b: Apply per-platform watermarks
+
+For each platform receiving the article, brand the neutral image with `watermark-brand`:
+
+```bash
+WM="$HOME/.claude/skills/watermark-brand/scripts/watermark.py"
+
+python3 "$WM" neutral.jpg out-wechat.jpg --platform wechat       --handle "蛋黄派的日常"
+python3 "$WM" neutral.jpg out-x.jpg      --platform x            --handle "@duanjl_china"
+python3 "$WM" neutral.jpg out-xhs.jpg    --platform xiaohongshu  --handle "灯塔笔记（AI版）"
+```
+
+Each output carries a visible tiled logo **and** an LSB blind watermark identifying the platform + account.
+
+Verify every branded image before publishing:
+
+```bash
+python3 "$WM" --extract out-wechat.jpg   # => 提取到暗水印: wechat:蛋黄派的日常
+```
+
+#### ⚠️ Format constraint: the blind watermark does NOT survive JPEG recompression
+
+Measured on a 1672×941 illustration:
+
+| Output | Size | Blind watermark |
+|---|---|---|
+| Script default (uncompressed) | 2.1 MB | ✅ survives |
+| JPEG q95 recompress | 512 KB | ❌ destroyed |
+| JPEG q90 recompress | 376 KB | ❌ destroyed |
+| PNG lossless | 2.0 MB | ✅ survives |
+| WebP lossless | 1.4 MB | ✅ survives |
+
+**Therefore: never run `baoyu-compress-image` (or any lossy re-encode) on a watermarked file.** Doing so silently strips the blind watermark while leaving the visible logo intact — the file looks correct but is no longer traceable.
+
+Order matters — compress the neutral image first if size matters, then watermark:
+
+```
+generate → dewatermark → [compress neutral if needed] → watermark → upload
+                                                         ^ never compress after this
+```
+
+If a platform needs a smaller branded file, use WebP lossless (1.4 MB) rather than lossy JPEG, or accept the visible-only watermark via `--no-blind` and note it in the Step 6 report.
+
+#### 3.5c: Naming and layout
+
+```
+illustrations/{slug}/
+  01-name.jpg              # raw generated (never published)
+  neutral/01-name.jpg      # dewatermarked, used by blog
+  wechat/01-name.jpg       # branded
+  x/01-name.jpg            # branded
+  xhs/01-name.jpg          # branded
+```
+
 ### Step 4: Upload to R2
+
+Upload **each platform's set separately** so every platform references its own branded images. The blog uses the `neutral/` set; each other platform uses its own directory.
 
 After all images for an article are generated, upload new images to R2:
 
@@ -160,6 +261,8 @@ bun run $SKILL_DIR/scripts/blog-publish.ts --check-auth
 bun run $SKILL_DIR/scripts/blog-publish.ts --payload-file /tmp/blog-post-payload-N.json
 ```
 
+**Images: use the `neutral/` set** (Step 3.5a) — dewatermarked, no platform branding. The blog is the canonical destination and must not carry another platform's logo.
+
 Payload fields:
 
 | Field | Rule |
@@ -185,6 +288,8 @@ After publishing, insert hook blockquote at top of source file.
 #### 5b: Publish to WeChat (Chinese articles only, parallel with 5a)
 
 For each Chinese article, invoke `baoyu-post-to-wechat` skill via API method.
+
+**Images: use the `wechat/` watermarked set** (Step 3.5b) — swap every image URL in the markdown to its WeChat-branded counterpart before publishing, including the cover passed via `--cover`. Do not pass the neutral or raw images here.
 
 **WeChat draft/add payload 额外字段（CRITICAL）：**
 
@@ -224,7 +329,7 @@ For each article, invoke `baoyu-post-to-x` skill to publish as an X Article (lon
 1. Read the article content (without front matter)
 2. Use `baoyu-post-to-x` skill with article mode:
    - Title: article title (filename without `.md`)
-   - Content: full markdown content with CDN image URLs
+   - Content: full markdown content, with every image URL swapped to the **`x/` watermarked set** (Step 3.5b) — cover included
    - The skill handles markdown → HTML conversion, image downloading, and Chrome CDP posting
 3. The skill opens Chrome with the X Article editor pre-filled — user reviews and clicks publish
 
@@ -254,6 +359,13 @@ Args: <path-to-chinese-article.md>
 
 **Output directory**: `xhs-images/{topic-slug}/` (NOT `xhs-cards/`)
 
+**Watermark the finished cards**: XHS cards are generated fresh by the skill, so they need the same treatment — dewatermark (3.5a), then apply the `xiaohongshu` brand watermark (3.5b) before handing them to the user. Same format constraint applies: do not lossy-recompress after watermarking.
+
+```bash
+python3 "$HOME/.claude/skills/watermark-brand/scripts/watermark.py" \
+  card-01.png card-01-xhs.png --platform xiaohongshu --handle "灯塔笔记（AI版）"
+```
+
 **After completion**:
 - Report card count, file paths, and suggested posting text
 - Include blog URL in the last card for traffic redirection
@@ -270,6 +382,8 @@ Args: <path-to-chinese-article.md>
 
 配图：X 篇文章生成了 Y 张插图
 封面：生成了 Z 张封面图
+去水印：处理了 N 张图（元数据 + 盲水印，PSNR > 40 dB）
+平台水印：微信 N 张 / X N 张 / 小红书 N 张（暗水印已逐张校验可提取）
 R2：上传了 N 个文件
 博客：发布了 A 篇文章到 dhpie.com
   - [title1]: [url1]
@@ -302,7 +416,10 @@ Step 3 (parallel) ──┼─ Agent: Article 2 illustrations ─┼── wait 
                     ├─ Agent: Cover 2                  │
                     └─ Agent: Cover 3                 ─┘
                               │
-Step 4 (sequential) ── R2 upload (--files, all new images)
+Step 3.5 (sequential) ─ dewatermark → neutral/ ; then per-platform watermark
+                        → wechat/ , x/ , xhs/   (NEVER lossy-recompress after)
+                              │
+Step 4 (sequential) ── R2 upload (--files, all new images incl. every platform set)
                               │
 Step 4.5 ── Pre-generate slugs + blog URLs
                               │
@@ -318,6 +435,8 @@ Step 6 ── Report results
 ## Notes
 
 - Image generation is **agent-first**: the sub-agent uses its runtime-native image tool when available, and only falls back to the Gemini API (`baoyu-image-gen --provider google`) when no native tool exists or generation fails
+- **Never lossy-recompress a watermarked image.** JPEG q95 already destroys the LSB blind watermark while leaving the visible logo intact, so the file looks fine but is no longer traceable. Compress the neutral image before watermarking, never after; if a smaller branded file is needed, use WebP lossless
+- **Blog gets `neutral/`, every other platform gets its own branded set** — a blog post carrying a WeChat or X logo is a bug
 - Blueprint style ensures visual consistency across the series
 - Paired zh/en articles share the same illustrations and covers
 - WeChat only receives Chinese articles; blog receives both zh and en
