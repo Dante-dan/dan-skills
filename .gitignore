@@ -3,3 +3,12 @@
 .env.*
 *.token
 node_modules/
+dist/
+build/
+.cache/
+.tmp/
+tmp/
+__pycache__/
+*.py[cod]
+*.log
+src/**/scripts/bun.lock

@@ -90,6 +90,26 @@ After successful publish, update the original markdown file:
    - `link`: full URL, e.g. `https://dhpie.com/posts/cn/<slug>` or `https://dhpie.com/posts/en/<slug>`
    - If these fields already exist in frontmatter, update them; otherwise add them
 
+## Updating an existing article
+
+When the user specifies an existing article, update it in place; do not create another post or generate a new slug.
+
+1. Resolve its ID from `GET /api/v3/posts?size=50&page=1` (paginate as needed), then read `GET /api/v3/posts/:id`. `GET /posts/get-url/:slug` returns only the category/slug path, not the ID or content. Back up the original response and local Markdown.
+2. Merge edits into the latest `data.text`. Preserve unrelated content, original publication date, slug, category, tags, images, and publishing settings. For a dated report, mark later additions with their actual date.
+3. Send **`PUT https://api.dhpie.com/api/v3/posts/:id`** with a complete editable payload. The admin interface uses this endpoint; creation uses `POST /posts`.
+4. Use the existing API Key via `x-api-key`. Browser cookies, session tokens and copied browser fingerprint headers are unnecessary and must not be saved in skill files or examples.
+
+Map read fields to write fields: `category_id` → `categoryId`, `content_format` → `contentFormat`, `is_published` → `isPublished`, `pin_at` → `pin`, `pin_order` → `pinOrder`, and `related[].id` → `relatedId`. Carry over `title`, `slug`, `text`, `summary`, `tags`, `images`, `meta`, and `copyright`. Do not blindly send the entire GET response. Omit `draftId` unless intentionally publishing a specific draft; it is not the post ID. Only alter summary or other metadata when the requested edit calls for it.
+
+```bash
+bun run ${SKILL_DIR}/scripts/blog-publish.ts \
+  --update-id <post-id> \
+  --expected-modified-at <modified_at-from-latest-GET> \
+  --payload-file /tmp/blog-update-payload.json
+```
+
+The timestamp check detects changes before PUT, but is not an atomic server-side conditional write. If it fails, re-read and merge; do not overwrite concurrent edits. After success, GET the post again and compare text, links and preserved metadata; then synchronize the local Markdown. If the write outcome is uncertain, read back before retrying. Explicit user authorization to update the identified article is sufficient; do not add another routine publishing confirmation.
+
 ## Auth
 
 Token stored in `${SKILL_DIR}/.env`:

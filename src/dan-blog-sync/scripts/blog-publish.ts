@@ -6,6 +6,7 @@
  * Usage:
  *   bun run blog-publish.ts --payload '<json>'
  *   bun run blog-publish.ts --payload-file <path>
+ *   bun run blog-publish.ts --update-id <id> --payload-file <path> [--expected-modified-at <timestamp>]
  *
  * The payload JSON should contain all fields ready to send to the API.
  * Auth token is read from DHPIE_TOKEN env var or .env file.
@@ -72,10 +73,11 @@ async function checkSlugExists(slug: string, token: string): Promise<boolean> {
 
 async function createPost(
   payload: Record<string, unknown>,
-  token: string
+  token: string,
+  updateId?: string
 ): Promise<{ ok: boolean; status: number; data: unknown }> {
-  const res = await fetch(`${API_BASE}/posts`, {
-    method: "POST",
+  const res = await fetch(`${API_BASE}/posts${updateId ? `/${encodeURIComponent(updateId)}` : ""}`, {
+    method: updateId ? "PUT" : "POST",
     headers: {
       "x-api-key": token,
       Accept: "application/json",
@@ -90,6 +92,16 @@ async function createPost(
 
 async function main() {
   const args = process.argv.slice(2);
+  const updateIdx = args.indexOf("--update-id");
+  const updateId = updateIdx === -1 ? undefined : args[updateIdx + 1];
+  if (updateIdx !== -1 && (!updateId || !/^\d+$/.test(updateId))) {
+    throw new Error("--update-id requires a Snowflake post ID");
+  }
+  const expectedIdx = args.indexOf("--expected-modified-at");
+  const expectedModifiedAt = expectedIdx === -1 ? undefined : args[expectedIdx + 1];
+  if (expectedIdx !== -1 && (!updateId || !expectedModifiedAt || expectedModifiedAt.startsWith("--"))) {
+    throw new Error("--expected-modified-at requires --update-id and a timestamp");
+  }
 
   // Parse args
   let payloadStr: string | undefined;
@@ -156,7 +168,20 @@ async function main() {
   }
 
   // Publish
-  const result = await createPost(payload, token);
+  if (updateId) {
+    for (const key of ["title", "slug", "categoryId", "text"]) {
+      if (typeof payload[key] !== "string" || !payload[key]) throw new Error(`Update payload requires ${key}`);
+    }
+    const currentResponse = await fetch(`${API_BASE}/posts/${encodeURIComponent(updateId)}`, {
+      headers: { "x-api-key": token, Accept: "application/json" },
+    });
+    if (!currentResponse.ok) throw new Error(`Cannot read update target: ${currentResponse.status}`);
+    const current = (await currentResponse.json()) as { data?: { modified_at?: string } };
+    if (expectedModifiedAt && current.data?.modified_at !== expectedModifiedAt) {
+      throw new Error("Post changed since preparation; re-read and merge before updating");
+    }
+  }
+  const result = await createPost(payload, token, updateId);
 
   if (!result.ok) {
     console.error(`API_ERROR ${result.status}:`);
@@ -164,7 +189,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("PUBLISHED");
+  console.log(updateId ? "UPDATED" : "PUBLISHED");
   console.log(JSON.stringify(result.data, null, 2));
 }
 
