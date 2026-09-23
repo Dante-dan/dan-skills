@@ -69,6 +69,16 @@ npx skills update
 
 ## Available Skills
 
+### dan-watermark
+
+Unified image watermark and output processing: add or remove X, WeChat, Xiaohongshu, and Douyin watermarks; clean EXIF/C2PA and invisible AI watermarks; compress, optimize, convert formats, and reduce image size.
+
+Install directly:
+
+```bash
+npx skills add dante-dan/dan-skills --skill dan-watermark
+```
+
 ### fe-deploy-setup
 
 Auto-generates deployment infrastructure for **Nuxt 4 / Next.js** projects. One command to create a complete CI/CD + Docker deployment pipeline.

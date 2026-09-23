@@ -1,0 +1,7 @@
+{
+  "name": "dan-watermark",
+  "version": "1.0.0",
+  "description": "Add and remove visible/invisible watermarks, clean AI metadata, compress, optimize, and convert images.",
+  "author": { "name": "Dan" },
+  "skills": ["./skills/dan-watermark"]
+}

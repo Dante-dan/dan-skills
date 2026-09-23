@@ -23,6 +23,14 @@
       "version": "1.0.0",
       "keywords": ["r2", "cloudflare", "upload", "images", "cdn"],
       "category": "tools"
+    },
+    {
+      "name": "dan-watermark",
+      "source": "./plugins/dan-watermark",
+      "description": "Add/remove X, WeChat, Xiaohongshu, and Douyin watermarks; clean AI metadata and invisible watermarks; compress and convert images.",
+      "version": "1.0.0",
+      "keywords": ["watermark", "dewatermark", "exif", "c2pa", "synthid", "image", "compress"],
+      "category": "tools"
     }
   ]
 }
