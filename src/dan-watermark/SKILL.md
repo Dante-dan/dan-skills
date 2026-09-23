@@ -26,10 +26,19 @@ python3 scripts/image.py INPUT.png OUTPUT.webp --format webp --quality 90
 
 ## 添加平台水印
 
+添加任何平台水印前，必须先执行一次去水印/清理步骤，再把清理后的文件作为 `watermark.py` 的输入。这样可以先清除原图中的元数据和不可见水印，避免在旧水印基础上继续叠加。默认保留原图，使用单独的中间文件：
+
 ```bash
-python3 scripts/watermark.py INPUT.png OUTPUT.png --platform x --handle "@duanjl_china"
-python3 scripts/watermark.py INPUT.png OUTPUT.png --platform wechat --handle "账号名" --style corner
-python3 scripts/watermark.py INPUT.png OUTPUT.png --platform xiaohongshu --handle "灯塔笔记"
+python3 scripts/image.py INPUT.png /tmp/dan-watermark-clean.png --clean
+python3 scripts/watermark.py /tmp/dan-watermark-clean.png OUTPUT.png --platform x --handle "@duanjl_china"
+```
+
+如果输入格式或路径不适合 `/tmp`，也可以在工作目录使用其他明确的中间输出路径；不得直接跳过清理步骤把原图交给 `watermark.py`。该清理步骤针对元数据和不可见水印，不能移除已经合成到像素中的可见文字或图案。
+
+```bash
+python3 scripts/watermark.py CLEAN_INPUT.png OUTPUT.png --platform x --handle "@duanjl_china"
+python3 scripts/watermark.py CLEAN_INPUT.png OUTPUT.png --platform wechat --handle "账号名" --style corner
+python3 scripts/watermark.py CLEAN_INPUT.png OUTPUT.png --platform xiaohongshu --handle "灯塔笔记"
 ```
 
 `--platform` 支持 `x`、`wechat`、`xiaohongshu`、`douyin`；`--style` 支持 `tile` 和 `corner`。默认同时写入可见水印和 LSB 暗水印；用 `--no-visible` 或 `--no-blind` 可关闭其中一层。提取暗水印：

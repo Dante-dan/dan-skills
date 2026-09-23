@@ -2,8 +2,6 @@
 
 Skills shared by Dan for improving daily work efficiency with Claude Code.
 
-默认情况下，`dan-skills` 目录内有必要保留的改动应在完成后 commit 并 push；构建产物和过程文件应加入 `.gitignore`，不提交到仓库。
-
 ## Prerequisites
 
 - Node.js environment installed
