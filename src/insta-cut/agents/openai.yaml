@@ -1,0 +1,4 @@
+interface:
+  display_name: "Insta Cut"
+  short_description: "从原片找故事，编排镜头、图文与声音，经独立审片并备份，用户确认后清理原片"
+  default_prompt: "用 $insta-cut 自主选镜、找故事，结合 B-roll、动态图文和声音剪成 4K60 vlog，遮挡成人并经独立审片，保存日期成片目录及双云备份，等我确认后再清理原片。"

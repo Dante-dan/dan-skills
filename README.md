@@ -69,6 +69,14 @@ npx skills update
 
 ## Available Skills
 
+### insta-cut
+
+Turn Insta360 and family footage into story-led vlogs with B-roll, motion typography, sound design, adult animal avatars, independent review, and verified private cloud backups. Keep local originals until the user approves the exact final version. See [the skill](src/insta-cut/SKILL.md) and [editing techniques](src/insta-cut/references/techniques/index.md).
+
+```bash
+npx skills add dante-dan/dan-skills --skill insta-cut
+```
+
 ### dan-watermark
 
 Unified image watermark and output processing: add or remove X, WeChat, Xiaohongshu, and Douyin watermarks; clean EXIF/C2PA and invisible AI watermarks; compress, optimize, convert formats, and reduce image size.
