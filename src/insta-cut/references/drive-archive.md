@@ -21,6 +21,14 @@
 
 并行归档台账区分 `not_started / queued / uploading / uploaded_unverified / content_verified / blocked`，存当前源hash/稳定stat、远端ID/版本、任务/队列标识与检查时间。制作期间不修改源片内容；源文件变化则旧内容核验失效，重新确认完整性与新版本。并行启动不代表提前获准清理：备份排队或上传结束都不满足删除条件，用户明确接受当前成片且下列备份门槛全部通过前始终保留本地原片。
 
+## 大原片与磁盘余量
+
+macOS APFS 同卷复制可先试系统 `cp -nc` 为官方同步目录创建独立的写时复制文件；先用一个小侧车验证支持，再复制完整原片。只对已核验完整、稳定的源操作，不覆盖已存在目标，不使用硬链接，不修改源内容。逐文件比较字节、SHA256与复制前后的源stat，记录实际剩余空间和规范日期目录；失败时保持原片，不自动退回会耗尽磁盘的普通大复制。文件系统克隆节省本地重复占用，不等于完成云端备份；上传还需官方队列与远端内容核验。后续释放本地缓存只用官方“释放空间/仅在线”，不unlink同步文件。
+
+官方 Apple FileProvider 的只读文件状态可辅助区分 `isUploading`、`isUploaded`、暂停/排除；它们只证明系统传输状态，不能代替Drive真实远端ID、版本与内容哈希。Drive内部DB暂未出现文件而FileProvider已标上传中，应记录 `uploading_unverified`，不立即重复上传或重建文件夹。Lost & Found先保全完整副本，结合目标文件的具体日志判断离线、网络超时或其他实际原因；没有权限错误证据就不改ACL/权限，不把旧远端残片当完整备份。
+
+实现与字段语义参考：[Apple：APFS文件克隆](https://developer.apple.com/documentation/foundation/about-apple-file-system)、[FileProvider isUploaded](https://developer.apple.com/documentation/fileprovider/nsfileprovideritemprotocol/isuploaded)、[isUploading](https://developer.apple.com/documentation/fileprovider/nsfileprovideritemprotocol/isuploading)。系统命令选项仍以本机 `man cp` 为准，不能把APFS概念当当前目标卷一定支持的证明。
+
 ## 用户确认是单独的清理门槛
 
 审片agent通过之后向用户交付可播放当前版本。`userApproval`记用户明确OK的消息日期/引用、对应片名/版本和hash；“继续”“上传好了”、旧版认可或助手自动提醒都不是当前版本验收。用户说片子有问题意味着本版未被接受，不能继承旧清理授权。
@@ -32,7 +40,7 @@
 - 关联原片与侧车、最终MP4的Drive内容已核验，剪映云空间备份已验证；
 - 源文件自核验后未变化，所有本地成片可用且保留。
 
-随后按白名单移除**同步目录之外**对应本地原片和可重建工作视频，保存清理日志，不广泛递归删日期目录。不能unlink Drive同步路径释放缓存，会传播云端删除；只能用官方“释放空间/仅在线”功能。未关联的原片不纳入清理。
+随后按白名单移除**同步目录之外**对应本地原片和可重建工作视频，保存清理日志，不广泛递归删日期目录。若用户本轮另明确允许备份后移除本地成片，只绑定已认可的当前版本及其核验完成的备份；不把它推广到旧成片或尚未验收的新片，项目单独记此例外，技能默认仍保留本地成片。不能unlink Drive同步路径释放缓存，会传播云端删除；只能用官方“释放空间/仅在线”功能。未关联的原片不纳入清理。
 
 ## 监控接续
 
