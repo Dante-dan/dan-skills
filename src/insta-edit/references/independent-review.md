@@ -80,6 +80,12 @@
 
 每版只留一份精简报告，包含：`reviewer`（独立身份及未参与制作声明）、`stage`、`capabilities`（实际完整看/听/逐帧能力）、`timeline_version`、`preview/path/sha256`、`delivery_candidate/path/sha256`（阶段B填写）、`coverage`（全片播放/音频/逐帧区段及方法）、`findings`（时间码、观察、严重性、修法）、`unreviewed`、`verdict`（声画审查通过/合格可交付/待修/待审）及 `reviewed_at`。阶段B保留与阶段A映射及一致性证据；复审附上所解决问题与当前证据，不堆积空白模板或虚假评分。
 
+## 序列与开头兑现专项
+
+按 [序列设计](sequence-design.md) 实际审当前顺序：每镜在此处增加什么、必要铺垫是否保留、同职责表达是否重复、是否把异时画面/声音拼成真实反应、开头是否在片内兑现且结果可看清。分别检查动作、信息、情绪节奏及停顿价值，自动踩点或短镜头数量不是节奏通过的证据；创意可来自镜头关系和视觉观念，不要求每镜都推进剧情。
+
+问题按实际层级退回：只需切点/时长/声音/效果修改则insta-edit处理；缺真实镜头则回选镜skill补具体来源/区段；主线不成立先改承诺或故事再重选。纸面结构检查、清单检查器和平台传播假设均不代替完整实际声画审查，能力缺项继续如实待审。别因套上理论名词就放宽隐私、事实或当前版本检查。
+
 ## 与用户确认及清理的关系
 
 为每条成片分开记录：`independentReview`（阶段A）、`finalRegression`（阶段B）、`userApproval`、`jianyingCloudBackup`、`driveFinalBackup` 和 `driveOriginalBackup`；这些不是互相代替的完成标记。用户未明确确认当前成片 OK 时，`userApproval` 必须为 pending，保留本地原片，即便两阶段审查和云端归档已通过。

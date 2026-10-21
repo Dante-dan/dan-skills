@@ -73,8 +73,8 @@ npx skills update
 
 Three composable skills for the Insta360 workflow:
 
-- [insta360-select](src/insta360-select/SKILL.md): review footage in Insta360 Studio, reframe selected ranges, and hand off source timecodes, story candidates, and high-quality shots.
-- [insta-edit](src/insta-edit/SKILL.md): creative Jianying editing, [editing recipes](src/insta-edit/references/techniques/index.md), adult animal avatars, sound, independent review, and highest-quality export. Works with selected shots or ordinary video.
+- [insta360-select](src/insta360-select/SKILL.md): review footage in Insta360 Studio, log coverage and events, compare evidence-backed stories, select shots by their contribution, and hand off source timecodes and high-quality ranges.
+- [insta-edit](src/insta-edit/SKILL.md): creative Jianying editing, [editing recipes](src/insta-edit/references/techniques/index.md), adult animal avatars, sound, independent review, and highest-quality export. Works with selected shots or ordinary video, with hook/payoff checks and separate action, information, and emotional rhythm design.
 - [insta-cut](src/insta-cut/SKILL.md): compose selection and editing, manage dated handoffs, private cloud backups checked once by unique filename, and user-approved local cleanup.
 
 Install all three for the full workflow, or invoke either specialist on its own:

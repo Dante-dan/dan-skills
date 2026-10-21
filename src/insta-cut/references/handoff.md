@@ -4,7 +4,7 @@
 
 ## selection.json：insta360-select 输出
 
-最低可用结构示例（本段示例镜头只为说明字段）：
+镜头传输基本结构示例（保留v1兼容；新批次另补下节故事选镜记录，示例值不是实测）：
 
 ```json
 {
@@ -97,3 +97,23 @@
 - `publication`: 上传、公开发布、用户已自行发布分开记录。未授权公开就只做私有交付；不能因镜头清单完成或云备份存在自动发布。
 
 仅处理归档或接续清理时不再调用Studio或剪辑skill。发现当前缺某一阶段的具体产物才退回相应阶段；已有真实缺项时明确报告，不反复启动同一无能力审片或重复上传。
+
+## 故事与选镜记录扩展
+
+新批次使用 `schemaVersion: 2`；前面的v1示例仍说明路径/时间码传输，不能仅凭该最小示例称已完成故事选镜。读取已有v1清单时复用有效记录，缺项只针对当前需作的选镜/剪辑补齐，已获认可/已发布片不追溯重做。以下字段合并进同一清单，可把长表放单独记录路径，避免重复六份报告：
+
+| 字段 | 内容与判定 |
+| --- | --- |
+| `coverage` | 每来源 `sourceId`、`visual`和`audio`分别记 `mode/rangesUs/fullyReviewed`，以及未覆盖区间、回看要求。mode如continuous、stills、listened、unavailable；抽帧不称全段已看，音频存在不称已听。 |
+| `events` | `eventId/sourceId/sourceInUs/sourceOutUs/eventGroupId/facts/claimKind`，观察方式、动作阶段、关键瞬间、声音/视觉条件及不确定性。claimKind为observed或inference，未知不填成已观察。 |
+| `storyCandidates` | 通常2–3条；每条 `storyId/oneSentenceChange/targetAudience/viewerReward/visualConcept/opening/beats/shareReason/shotIds/gaps`，beats给eventIds。仅1条或用户指定方向时用 `candidateLimitReason`解释，不虚构事件凑数。 |
+| `selectedStoryId` | 明确所选主线。`opening`含knownContext/viewerQuestion/withheldInformation/payoffShotIds，兑现必须来自实际所选shotIds；时间/因果依据与视觉联想分开。 |
+| `shots`新增项 | `eventIds/roles/viewerAddition/removalLoss`，及独立的 `audioSelection`（sourceId/inUs/outUs，未选可null）、手机可读性、关键瞬间、技术限制。roles用hook/context/development/evidence/reaction/payoff/transition/pause。 |
+| `relationships` | fromShotId/toShotId/kind/basis：kind为cause_effect、contrast、escalation、question_answer、action_reaction、time_ellipsis或spatial_context。同次反应用basis=observed_same_event并对应同eventGroupId；跨事件因果须basis=documented_causal_link及observed的evidenceEventIds/factBasis，不凭先后断言因果。视觉类比用kind=contrast、basis=associative，不把associative放kind，不伪装现场反应。 |
+| `alternatives` | 对每个重要取舍记shotId/alternativeShotId/decision/reason及相邻镜头；候选可未导出，不能因此丢失唯一事件。 |
+| `sequenceReview` | status、方法/实际画面与声音覆盖、逐项checks、问题时间码、改动及未审项。纸面串联只称纸面检查；不能代替独立审片。 |
+| `audienceBrief` | platform/topic/targetAudience/viewerReward/shareReason/pacePreference；缺平台不阻塞通用制作，平台预设不是算法定义。 |
+
+`insta-edit`的 `edit-result.json` 复用上述当前主线/来源映射，另列 `timelineClips`（clipId、shotId/eventIds、视频/音频源时间、timeline时间、作用与贡献）、段落 `rhythmPlan`（动作/信息/情绪、节奏/切点意图）、`sequenceReview`以及实际 `openingPayoffMapping`（payoffClipIds及兑现时间码）。替代开头与发布反馈有数据时记 `alternateOpening/feedback`，不要求为了字段生成额外影片或读取账号统计。
+
+可选运行 [选镜清单检查器](../../insta360-select/scripts/audit_selection.py)：`python3 .../audit_selection.py /absolute/selection.json --output /absolute/selection-audit.json`。它只检查ID引用、时间范围、覆盖声明和开头兑现是否引用入选镜头等机械约束；不访问视频、不上传、不删文件，不判故事/节奏或观众感受。报告分开 `mechanicalChecks`、`handoffCompleteness`、`mediaReadiness: not_checked`和 `creativeReview: unreviewed`；完整性partial不能当完整交接，音频未听会提示，文件是否存在/实际画面仍由接收方核实。不能当独立审片或用户OK。旧v1仅提示缺少新记录，不使历史认可失效。
