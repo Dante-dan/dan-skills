@@ -1,0 +1,4 @@
+interface:
+  display_name: "Insta Edit"
+  short_description: "用剪映编排创意镜头、图文与声音，经独立审片后最高画质导出"
+  default_prompt: "用 $insta-edit 将已选镜头剪成创意优先且有故事的影片，使用成人纯动物3D头像，独立审片后以最高质量4K约60帧导出。"

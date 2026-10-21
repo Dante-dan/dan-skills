@@ -1,0 +1,4 @@
+interface:
+  display_name: "Insta360 Select"
+  short_description: "在 Studio 观看全景原片，挑选故事镜头并导出可追溯高质量片段"
+  default_prompt: "用 $insta360-select 在Insta360 Studio挑选这批素材的动作、反应和空镜，记录源时间码、取景与故事线索并交付镜头清单。"

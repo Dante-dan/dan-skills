@@ -69,12 +69,20 @@ npx skills update
 
 ## Available Skills
 
-### insta-cut
+### insta-cut / insta360-select / insta-edit
 
-Turn Insta360 and family footage into story-led vlogs with B-roll, motion typography, sound design, adult animal avatars, independent review, and verified private cloud backups. Keep local originals until the user approves the exact final version. See [the skill](src/insta-cut/SKILL.md) and [editing techniques](src/insta-cut/references/techniques/index.md).
+Three composable skills for the Insta360 workflow:
+
+- [insta360-select](src/insta360-select/SKILL.md): review footage in Insta360 Studio, reframe selected ranges, and hand off source timecodes, story candidates, and high-quality shots.
+- [insta-edit](src/insta-edit/SKILL.md): creative Jianying editing, [editing recipes](src/insta-edit/references/techniques/index.md), adult animal avatars, sound, independent review, and highest-quality export. Works with selected shots or ordinary video.
+- [insta-cut](src/insta-cut/SKILL.md): compose selection and editing, manage dated handoffs, private cloud backups checked once by unique filename, and user-approved local cleanup.
+
+Install all three for the full workflow, or invoke either specialist on its own:
 
 ```bash
 npx skills add dante-dan/dan-skills --skill insta-cut
+npx skills add dante-dan/dan-skills --skill insta360-select
+npx skills add dante-dan/dan-skills --skill insta-edit
 ```
 
 ### dan-watermark
